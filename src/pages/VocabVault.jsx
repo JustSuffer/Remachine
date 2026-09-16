@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   BrainCircuit, 
   Plus, 
@@ -6,7 +6,6 @@ import {
   Volume2, 
   Check, 
   Clock, 
-  Sparkles, 
   Search, 
   Filter, 
   Trash2, 
@@ -14,7 +13,9 @@ import {
   Upload, 
   X,
   Layers,
-  Award
+  Award,
+  Sparkles,
+  Command
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useLanguage } from '../context/LanguageContext';
@@ -34,14 +35,13 @@ export default function VocabVault() {
     speakText 
   } = useMemory();
 
-  const [activeView, setActiveView] = useState('flashcard'); // 'flashcard' | 'list'
+  const [activeView, setActiveView] = useState('flashcard');
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTag, setSelectedTag] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Form state for adding custom word
   const [newWordData, setNewWordData] = useState({
     word: '',
     ipa: '',
@@ -54,7 +54,6 @@ export default function VocabVault() {
     level: 'B2'
   });
 
-  // Filtered list for word bank
   const filteredVocabulary = vocabulary.filter(item => {
     const matchesSearch = item.word.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           item.meaningTr.toLowerCase().includes(searchTerm.toLowerCase());
@@ -68,9 +67,29 @@ export default function VocabVault() {
     return true;
   });
 
-  // Deck for flashcards: prioritize due words, then remaining
   const flashcardDeck = dueWords.length > 0 ? dueWords : vocabulary;
   const currentCard = flashcardDeck[currentCardIndex] || null;
+
+  // Keyboard controls: Space to flip, 1, 2, 3 to grade
+  useEffect(() => {
+    if (activeView !== 'flashcard' || isModalOpen) return;
+
+    const handleKeyDown = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+      if (e.code === 'Space') {
+        e.preventDefault();
+        setIsFlipped(prev => !prev);
+      } else if (isFlipped) {
+        if (e.key === '1') handleGradeCard(0);
+        if (e.key === '2') handleGradeCard(3);
+        if (e.key === '3') handleGradeCard(5);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeView, isFlipped, currentCardIndex, isModalOpen]);
 
   const handleGradeCard = (grade) => {
     if (!currentCard) return;
@@ -80,10 +99,9 @@ export default function VocabVault() {
     if (currentCardIndex + 1 < flashcardDeck.length) {
       setCurrentCardIndex(prev => prev + 1);
     } else {
-      // Completed deck!
       try {
         confetti({
-          particleCount: 100,
+          particleCount: 80,
           spread: 70,
           origin: { y: 0.6 }
         });
@@ -131,102 +149,93 @@ export default function VocabVault() {
   };
 
   return (
-    <div className="space-y-6 animate-fadeIn">
+    <div className="space-y-6 animate-fadeIn max-w-5xl mx-auto">
       
-      {/* Header & Controls */}
-      <div className="glass-panel p-6 rounded-2xl border border-purple-500/30 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-fuchsia-600/20 border border-fuchsia-500/40 flex items-center justify-center">
-            <BrainCircuit className="w-5 h-5 text-fuchsia-300" />
-          </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-black text-white">
-              {t.vault.title}
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-300">
-              {t.vault.subtitle}
-            </p>
-          </div>
+      {/* Header bar */}
+      <div className="surface-card p-5 sm:p-6 rounded-2xl flex flex-wrap items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-xl font-extrabold text-white">
+            {t.vault.title}
+          </h1>
+          <p className="text-xs text-zinc-400">
+            {t.vault.subtitle}
+          </p>
         </div>
 
-        {/* Mode Switcher & Add Button */}
+        {/* View Switcher */}
         <div className="flex flex-wrap items-center gap-2">
-          <div className="bg-obsidian-950 p-1 rounded-xl border border-purple-500/30 flex items-center">
+          <div className="flex items-center gap-1 p-1 bg-obsidian-900 rounded-xl border border-white/[0.06] text-xs">
             <button
               onClick={() => {
                 setActiveView('flashcard');
                 setIsFlipped(false);
               }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
                 activeView === 'flashcard'
-                  ? 'bg-purple-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-brand-950 text-brand-200 border border-brand-500/40'
+                  : 'text-zinc-400 hover:text-white'
               }`}
             >
-              {t.vault.flashcardMode} ({dueWords.length})
+              Kart Tekrarı ({dueWords.length})
             </button>
             <button
               onClick={() => setActiveView('list')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
                 activeView === 'list'
-                  ? 'bg-purple-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-brand-950 text-brand-200 border border-brand-500/40'
+                  : 'text-zinc-400 hover:text-white'
               }`}
             >
-              {t.vault.listMode} ({vocabulary.length})
+              Kelime Listesi ({vocabulary.length})
             </button>
           </div>
 
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white text-xs font-bold shadow-lg shadow-purple-600/30 transition-all"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold shadow-glow-violet transition-all"
           >
             <Plus className="w-4 h-4" />
-            <span>{t.vault.addNewWord}</span>
+            <span>Kelime Ekle</span>
           </button>
         </div>
       </div>
 
-      {/* FLASHCARD VIEW */}
+      {/* FLASHCARD REVIEW VIEW */}
       {activeView === 'flashcard' && (
         <div className="max-w-2xl mx-auto space-y-4">
           
           {currentCard ? (
             <div className="space-y-4">
               
-              {/* Progress counter */}
-              <div className="flex items-center justify-between text-xs text-slate-400 font-mono px-2">
+              <div className="flex items-center justify-between text-xs font-mono text-zinc-500 px-2">
                 <span>
                   Kart {currentCardIndex + 1} / {flashcardDeck.length}
                 </span>
-                <span className="text-purple-300">
-                  {currentCard.status === 'due' ? '⚠️ Tekrar Zamanı Geldi' : 'Öğreniliyor'}
+                <span className="text-brand-400">
+                  {currentCard.status === 'due' ? 'Tekrar Bekliyor' : 'Öğreniliyor'}
                 </span>
               </div>
 
-              {/* Interactive Flashcard with Flip Animation */}
+              {/* Minimalist Flashcard */}
               <div
                 onClick={() => setIsFlipped(!isFlipped)}
-                className="cursor-pointer min-h-[340px] rounded-2xl glass-panel border border-purple-500/40 p-8 flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:border-purple-400 shadow-2xl group"
+                className="cursor-pointer min-h-[320px] rounded-2xl surface-card p-8 flex flex-col justify-between relative select-none hover:border-brand-500/40 transition-all duration-200 group"
               >
-                {/* Background Glow */}
-                <div className="absolute -top-16 -right-16 w-60 h-60 bg-purple-600/20 rounded-full blur-3xl pointer-events-none" />
-
-                {/* Card Front (English word + IPA + audio) */}
                 {!isFlipped ? (
-                  <div className="space-y-6 my-auto text-center">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-950/80 border border-purple-500/30 text-xs font-mono text-purple-300">
+                  /* Front */
+                  <div className="space-y-5 my-auto text-center">
+                    <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-obsidian-900 border border-white/[0.08] text-xs font-mono text-brand-300">
                       <span>{currentCard.pos.toUpperCase()}</span>
                       <span>•</span>
                       <span>{currentCard.level || 'B2'}</span>
                     </div>
 
-                    <div className="space-y-2">
-                      <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight group-hover:text-purple-200 transition-colors">
+                    <div className="space-y-1">
+                      <h2 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight">
                         {currentCard.word}
                       </h2>
                       {currentCard.ipa && (
-                        <p className="text-sm font-mono text-purple-400">
+                        <p className="text-sm font-mono text-zinc-400">
                           {currentCard.ipa}
                         </p>
                       )}
@@ -237,46 +246,46 @@ export default function VocabVault() {
                         e.stopPropagation();
                         speakText(currentCard.word);
                       }}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-obsidian-900 border border-purple-500/30 hover:border-purple-400 text-purple-300 hover:text-white transition-all text-xs font-semibold"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-obsidian-900 border border-white/[0.08] text-xs font-mono text-zinc-300 hover:text-white"
                     >
-                      <Volume2 className="w-4 h-4 text-purple-400" />
+                      <Volume2 className="w-3.5 h-3.5" />
                       <span>{t.common.listen}</span>
                     </button>
                   </div>
                 ) : (
-                  /* Card Back (Turkish translation + Example sentence + Collocations) */
+                  /* Back */
                   <div className="space-y-4 my-auto animate-fadeIn">
                     <div className="text-center space-y-1">
-                      <span className="text-xs text-purple-400 font-mono">Türkçe Karşılığı</span>
-                      <h3 className="text-2xl sm:text-3xl font-extrabold text-purple-200">
+                      <span className="text-xs text-brand-400 font-mono">Türkçe Anlamı</span>
+                      <h3 className="text-2xl sm:text-3xl font-extrabold text-white">
                         {currentCard.meaningTr}
                       </h3>
                       {currentCard.meaningEn && (
-                        <p className="text-xs text-slate-400 italic">
+                        <p className="text-xs text-zinc-400 italic">
                           "{currentCard.meaningEn}"
                         </p>
                       )}
                     </div>
 
                     {currentCard.exampleEn && (
-                      <div className="bg-obsidian-900/90 p-4 rounded-xl border border-purple-500/20 space-y-1.5 text-left">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] text-purple-400 font-mono">Örnek Cümle:</span>
+                      <div className="bg-obsidian-900/90 p-3.5 rounded-xl border border-white/[0.06] space-y-1 text-left">
+                        <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500">
+                          <span>Örnek Cümle:</span>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               speakText(currentCard.exampleEn);
                             }}
-                            className="text-slate-400 hover:text-purple-300 p-1"
+                            className="text-zinc-400 hover:text-brand-300 p-0.5"
                           >
-                            <Volume2 className="w-3.5 h-3.5" />
+                            <Volume2 className="w-3 h-3" />
                           </button>
                         </div>
-                        <p className="text-xs text-slate-100 font-medium leading-relaxed">
+                        <p className="text-xs text-zinc-100 font-medium leading-relaxed">
                           {currentCard.exampleEn}
                         </p>
                         {currentCard.exampleTr && (
-                          <p className="text-[11px] text-slate-400 italic">
+                          <p className="text-[11px] text-zinc-400 italic">
                             {currentCard.exampleTr}
                           </p>
                         )}
@@ -284,11 +293,11 @@ export default function VocabVault() {
                     )}
 
                     {currentCard.collocations && currentCard.collocations.length > 0 && (
-                      <div className="text-left text-xs">
-                        <span className="text-[10px] text-slate-400 font-mono block mb-1">Eşdizimler (Collocations):</span>
-                        <div className="flex flex-wrap gap-1.5">
+                      <div className="text-left text-xs font-mono">
+                        <span className="text-[10px] text-zinc-500 block mb-1">Eşdizimler:</span>
+                        <div className="flex flex-wrap gap-1">
                           {currentCard.collocations.map((c, i) => (
-                            <span key={i} className="px-2 py-0.5 rounded bg-purple-950/80 text-purple-300 text-[11px] border border-purple-500/20">
+                            <span key={i} className="px-2 py-0.5 rounded bg-obsidian-900 text-brand-300 text-[11px] border border-white/[0.04]">
                               {c}
                             </span>
                           ))}
@@ -298,47 +307,56 @@ export default function VocabVault() {
                   </div>
                 )}
 
-                {/* Flip Hint */}
-                <div className="text-center pt-4 border-t border-purple-900/20 text-[11px] text-slate-500 font-mono">
-                  {t.vault.cardFlipHint}
+                <div className="text-center pt-3 border-t border-white/[0.06] text-[11px] text-zinc-500 font-mono flex items-center justify-center gap-1">
+                  <span>Çevirmek için tıkla veya</span>
+                  <span className="px-1.5 py-0.2 rounded bg-obsidian-850 border border-white/[0.08] text-zinc-300">Space</span>
                 </div>
               </div>
 
-              {/* SRS Rating Action Buttons */}
+              {/* Rating Buttons with Shortcuts */}
               {isFlipped && (
-                <div className="grid grid-cols-3 gap-2 sm:gap-3 animate-fadeIn">
+                <div className="grid grid-cols-3 gap-2.5 animate-fadeIn font-mono text-xs">
                   <button
                     onClick={() => handleGradeCard(0)}
-                    className="p-3 rounded-xl bg-red-950/70 hover:bg-red-900/80 text-red-200 border border-red-500/40 text-xs font-semibold flex flex-col items-center gap-1 transition-all"
+                    className="p-3 rounded-xl bg-red-950/40 hover:bg-red-950/70 text-red-200 border border-red-500/30 flex flex-col items-center gap-1 transition-all"
                   >
-                    <span>❌ Unuttum</span>
-                    <span className="text-[10px] text-red-400 font-mono">1 dk içinde</span>
+                    <div className="font-bold flex items-center gap-1">
+                      <span>Unuttum</span>
+                      <span className="text-[10px] opacity-60">(1)</span>
+                    </div>
+                    <span className="text-[10px] text-red-400">1 dk</span>
                   </button>
 
                   <button
                     onClick={() => handleGradeCard(3)}
-                    className="p-3 rounded-xl bg-amber-950/70 hover:bg-amber-900/80 text-amber-200 border border-amber-500/40 text-xs font-semibold flex flex-col items-center gap-1 transition-all"
+                    className="p-3 rounded-xl bg-amber-950/40 hover:bg-amber-950/70 text-amber-200 border border-amber-500/30 flex flex-col items-center gap-1 transition-all"
                   >
-                    <span>⚡ Zor Hatırlandı</span>
-                    <span className="text-[10px] text-amber-400 font-mono">1 gün sonra</span>
+                    <div className="font-bold flex items-center gap-1">
+                      <span>Zor</span>
+                      <span className="text-[10px] opacity-60">(2)</span>
+                    </div>
+                    <span className="text-[10px] text-amber-400">1 gün</span>
                   </button>
 
                   <button
                     onClick={() => handleGradeCard(5)}
-                    className="p-3 rounded-xl bg-emerald-950/70 hover:bg-emerald-900/80 text-emerald-200 border border-emerald-500/40 text-xs font-semibold flex flex-col items-center gap-1 transition-all"
+                    className="p-3 rounded-xl bg-emerald-950/40 hover:bg-emerald-950/70 text-emerald-200 border border-emerald-500/30 flex flex-col items-center gap-1 transition-all"
                   >
-                    <span>✅ Çok Kolay</span>
-                    <span className="text-[10px] text-emerald-400 font-mono">Kalıcı Hafıza</span>
+                    <div className="font-bold flex items-center gap-1">
+                      <span>Kolay</span>
+                      <span className="text-[10px] opacity-60">(3)</span>
+                    </div>
+                    <span className="text-[10px] text-emerald-400">4+ gün</span>
                   </button>
                 </div>
               )}
 
             </div>
           ) : (
-            <div className="glass-panel p-8 rounded-2xl text-center space-y-3 border border-purple-500/30">
-              <Award className="w-12 h-12 text-emerald-400 mx-auto" />
-              <h3 className="text-lg font-bold text-white">Tebrikler! Bugünlük tüm tekrarlar tamamlandı.</h3>
-              <p className="text-xs text-slate-400">Yeni kelimeler eklemek için cümle parçalayıcıyı veya 'Yeni Kelime Ekle' butonunu kullanabilirsiniz.</p>
+            <div className="surface-card p-8 rounded-2xl text-center space-y-3">
+              <Award className="w-10 h-10 text-emerald-400 mx-auto" />
+              <h3 className="text-base font-bold text-white">Tüm tekrarlar tamamlandı.</h3>
+              <p className="text-xs text-zinc-400">Yeni kelimeler eklemek için çevirmen veya kelime ekleme panelini kullanabilirsiniz.</p>
             </div>
           )}
 
@@ -349,77 +367,73 @@ export default function VocabVault() {
       {activeView === 'list' && (
         <div className="space-y-4">
           
-          {/* Search and Filters */}
-          <div className="glass-panel p-4 rounded-xl border border-purple-500/20 flex flex-wrap items-center justify-between gap-3">
-            
-            <div className="relative flex-1 min-w-[240px]">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+          {/* Controls Bar */}
+          <div className="surface-card p-4 rounded-xl flex flex-wrap items-center justify-between gap-3">
+            <div className="relative flex-1 min-w-[220px]">
+              <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-3" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Kelime veya Türkçe anlam ara..."
-                className="w-full bg-obsidian-950/90 border border-purple-500/30 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-400"
+                className="w-full surface-input rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none"
               />
             </div>
 
-            {/* Tag filter pills */}
-            <div className="flex flex-wrap gap-1.5 text-xs">
+            <div className="flex flex-wrap gap-1 text-xs font-mono">
               {['all', 'due', 'learning', 'mastered', 'yds', 'ielts'].map((tag) => (
                 <button
                   key={tag}
                   onClick={() => setSelectedTag(tag)}
-                  className={`px-3 py-1.5 rounded-lg capitalize font-mono transition-all ${
+                  className={`px-2.5 py-1 rounded-lg capitalize transition-all ${
                     selectedTag === tag
-                      ? 'bg-purple-600 text-white border border-purple-400'
-                      : 'bg-obsidian-900 text-slate-400 hover:text-white border border-purple-500/20'
+                      ? 'bg-brand-950 text-brand-300 border border-brand-500/40'
+                      : 'bg-obsidian-900 text-zinc-400 hover:text-white border border-white/[0.06]'
                   }`}
                 >
-                  {tag === 'all' ? 'Tümü' : tag === 'due' ? 'Tekrarı Gelenler' : tag}
+                  {tag === 'all' ? 'Tümü' : tag === 'due' ? 'Tekrar Bekleyen' : tag}
                 </button>
               ))}
             </div>
 
-            {/* Backup Export/Import */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 text-xs font-mono">
               <button
                 onClick={exportData}
-                className="p-2 rounded-lg bg-obsidian-900 border border-purple-500/30 hover:border-purple-400 text-purple-300 text-xs flex items-center gap-1"
-                title={t.common.exportJson}
+                className="p-1.5 rounded-lg bg-obsidian-900 border border-white/[0.08] text-zinc-400 hover:text-white flex items-center gap-1"
+                title="JSON Yedek İndir"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{t.common.exportJson}</span>
+                <span className="hidden sm:inline">Yedekle</span>
               </button>
 
-              <label className="p-2 rounded-lg bg-obsidian-900 border border-purple-500/30 hover:border-purple-400 text-purple-300 text-xs flex items-center gap-1 cursor-pointer">
+              <label className="p-1.5 rounded-lg bg-obsidian-900 border border-white/[0.08] text-zinc-400 hover:text-white flex items-center gap-1 cursor-pointer">
                 <Upload className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{t.common.importJson}</span>
+                <span className="hidden sm:inline">Yükle</span>
                 <input type="file" accept=".json" onChange={handleFileUpload} className="hidden" />
               </label>
             </div>
-
           </div>
 
-          {/* Cards Table */}
+          {/* Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {filteredVocabulary.map((item) => (
               <div
                 key={item.id}
-                className="glass-panel p-4 rounded-xl border border-purple-500/20 hover:border-purple-500/40 transition-all flex flex-col justify-between group"
+                className="surface-card p-4 rounded-xl flex flex-col justify-between group"
               >
                 <div>
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-base font-bold text-white group-hover:text-purple-200">
+                        <span className="text-base font-bold text-zinc-100">
                           {item.word}
                         </span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-950 border border-purple-500/30 text-purple-300 font-mono">
+                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-obsidian-800 text-brand-300 font-mono">
                           {item.level || 'B2'}
                         </span>
                       </div>
                       {item.ipa && (
-                        <div className="text-[11px] text-purple-400/80 font-mono mt-0.5">
+                        <div className="text-[10px] text-zinc-500 font-mono mt-0.5">
                           {item.ipa}
                         </div>
                       )}
@@ -428,39 +442,34 @@ export default function VocabVault() {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => speakText(item.word)}
-                        className="p-1 text-slate-400 hover:text-purple-300"
-                        title={t.common.listen}
+                        className="p-1 text-zinc-500 hover:text-brand-300"
                       >
                         <Volume2 className="w-3.5 h-3.5" />
                       </button>
-
                       <button
                         onClick={() => deleteWord(item.id)}
-                        className="p-1 text-slate-500 hover:text-red-400"
-                        title={t.common.delete}
+                        className="p-1 text-zinc-600 hover:text-red-400"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
 
-                  <div className="mt-2 text-xs text-purple-200 font-medium">
+                  <div className="mt-2 text-xs text-brand-200 font-medium">
                     {item.meaningTr}
                   </div>
 
                   {item.exampleEn && (
-                    <div className="mt-2 text-[11px] text-slate-400 line-clamp-2 bg-obsidian-950/60 p-2 rounded border border-purple-900/20">
+                    <div className="mt-2 text-[11px] text-zinc-400 line-clamp-2 bg-obsidian-900/70 p-2 rounded border border-white/[0.04]">
                       "{item.exampleEn}"
                     </div>
                   )}
                 </div>
 
-                <div className="mt-3 pt-2 border-t border-purple-900/30 flex items-center justify-between text-[10px] text-slate-400">
-                  <span className="font-mono">
-                    Tekrar: {item.interval} gün
-                  </span>
-                  <span className={`px-1.5 py-0.5 rounded font-mono ${
-                    item.status === 'mastered' ? 'bg-emerald-950 text-emerald-300' : 'bg-purple-950 text-purple-300'
+                <div className="mt-3 pt-2 border-t border-white/[0.06] flex items-center justify-between text-[10px] font-mono text-zinc-500">
+                  <span>Tekrar: {item.interval} gün</span>
+                  <span className={`px-1.5 py-0.2 rounded ${
+                    item.status === 'mastered' ? 'bg-emerald-950 text-emerald-300' : 'bg-obsidian-800 text-zinc-400'
                   }`}>
                     {item.status}
                   </span>
@@ -472,80 +481,67 @@ export default function VocabVault() {
         </div>
       )}
 
-      {/* Add Custom Word Modal */}
+      {/* Modal Add Word */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-obsidian-950/80 backdrop-blur-md">
-          <div className="glass-panel w-full max-w-lg p-6 rounded-2xl border border-purple-500/40 shadow-2xl relative space-y-4">
-            
-            <div className="flex items-center justify-between border-b border-purple-900/40 pb-3">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Plus className="w-5 h-5 text-purple-400" />
-                <span>{t.vault.modalTitle}</span>
+          <div className="surface-card w-full max-w-md p-6 rounded-2xl shadow-elevated space-y-4">
+            <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
+              <h3 className="text-base font-bold text-white">
+                Kelime Ekle
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-1 text-slate-400 hover:text-white"
+                className="p-1 text-zinc-400 hover:text-white"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleCreateWord} className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-slate-300 block mb-1 font-medium">{t.vault.wordLabel}</label>
+                  <label className="text-zinc-400 block mb-1">Kelime / Kalıp</label>
                   <input
                     type="text"
                     required
                     value={newWordData.word}
                     onChange={(e) => setNewWordData({ ...newWordData, word: e.target.value })}
-                    placeholder="E.g. corroborate"
-                    className="w-full bg-obsidian-900 border border-purple-500/30 rounded-lg p-2 text-white focus:outline-none focus:border-purple-400"
+                    placeholder="E.g. deteriorate"
+                    className="w-full surface-input rounded-lg p-2 text-white"
                   />
                 </div>
                 <div>
-                  <label className="text-slate-300 block mb-1 font-medium">{t.vault.ipaLabel}</label>
+                  <label className="text-zinc-400 block mb-1">IPA Fonetik</label>
                   <input
                     type="text"
                     value={newWordData.ipa}
                     onChange={(e) => setNewWordData({ ...newWordData, ipa: e.target.value })}
-                    placeholder="E.g. /kəˈrɒb.ə.reɪt/"
-                    className="w-full bg-obsidian-900 border border-purple-500/30 rounded-lg p-2 text-white focus:outline-none focus:border-purple-400"
+                    placeholder="/dɪˈtɪə.ri.ə.reɪt/"
+                    className="w-full surface-input rounded-lg p-2 text-white font-mono"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-slate-300 block mb-1 font-medium">{t.vault.meaningLabel}</label>
+                <label className="text-zinc-400 block mb-1">Türkçe Anlamı</label>
                 <input
                   type="text"
                   required
                   value={newWordData.meaningTr}
                   onChange={(e) => setNewWordData({ ...newWordData, meaningTr: e.target.value })}
-                  placeholder="E.g. doğrulamak, teyit etmek"
-                  className="w-full bg-obsidian-900 border border-purple-500/30 rounded-lg p-2 text-white focus:outline-none focus:border-purple-400"
+                  placeholder="E.g. kötüleşmek, bozulmak"
+                  className="w-full surface-input rounded-lg p-2 text-white"
                 />
               </div>
 
               <div>
-                <label className="text-slate-300 block mb-1 font-medium">{t.vault.exampleLabel}</label>
+                <label className="text-zinc-400 block mb-1">Örnek Cümle</label>
                 <textarea
                   rows={2}
                   value={newWordData.exampleEn}
                   onChange={(e) => setNewWordData({ ...newWordData, exampleEn: e.target.value })}
-                  placeholder="E.g. Recent evidence corroborates his hypothesis."
-                  className="w-full bg-obsidian-900 border border-purple-500/30 rounded-lg p-2 text-white focus:outline-none focus:border-purple-400"
-                />
-              </div>
-
-              <div>
-                <label className="text-slate-300 block mb-1 font-medium">{t.vault.exampleTrLabel}</label>
-                <input
-                  type="text"
-                  value={newWordData.exampleTr}
-                  onChange={(e) => setNewWordData({ ...newWordData, exampleTr: e.target.value })}
-                  placeholder="E.g. Son kanıtlar onun hipotezini doğrulamaktadır."
-                  className="w-full bg-obsidian-900 border border-purple-500/30 rounded-lg p-2 text-white focus:outline-none focus:border-purple-400"
+                  placeholder="E.g. The weather deteriorated rapidly."
+                  className="w-full surface-input rounded-lg p-2 text-white"
                 />
               </div>
 
@@ -553,19 +549,18 @@ export default function VocabVault() {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-lg bg-obsidian-900 text-slate-300 hover:text-white"
+                  className="px-3 py-1.5 rounded-lg bg-obsidian-900 text-zinc-400 hover:text-white"
                 >
-                  {t.common.cancel}
+                  İptal
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-bold"
+                  className="px-4 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-bold"
                 >
-                  {t.common.save}
+                  Kaydet
                 </button>
               </div>
             </form>
-
           </div>
         </div>
       )}

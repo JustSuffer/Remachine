@@ -4,7 +4,6 @@ import {
   Clock, 
   CheckCircle2, 
   XCircle, 
-  Sparkles, 
   HelpCircle, 
   RotateCcw, 
   ArrowRight, 
@@ -31,45 +30,39 @@ export default function ExamHub() {
   const { t } = useLanguage();
   const { vocabulary } = useMemory();
 
-  // Screen state: 'hub' | 'exam' | 'results'
   const [screenState, setScreenState] = useState('hub');
-
-  // Available mock exams
   const mockExamsMeta = getAllMockExamsMeta();
 
-  // Setup / Config modal state
+  // Config Modal State
   const [selectedExamId, setSelectedExamId] = useState(1);
-  const [examDurationMins, setExamDurationMins] = useState(90); // 90 min default
+  const [examDurationMins, setExamDurationMins] = useState(90);
   const [customDurationInput, setCustomDurationInput] = useState('90');
   const [isCustomDuration, setIsCustomDuration] = useState(false);
-  const [questionCount, setQuestionCount] = useState(80); // 80 questions default
-  const [examMode, setExamMode] = useState('official'); // 'official' | 'practice'
+  const [questionCount, setQuestionCount] = useState(80);
+  const [examMode, setExamMode] = useState('official');
   const [isSetupModalOpen, setIsSetupModalOpen] = useState(false);
 
-  // Active Exam state
+  // Active Exam State
   const [currentExamData, setCurrentExamData] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [userAnswers, setUserAnswers] = useState({}); // { 0: 'A', 1: 'C' }
-  const [flaggedQuestions, setFlaggedQuestions] = useState({}); // { 0: true }
+  const [userAnswers, setUserAnswers] = useState({});
+  const [flaggedQuestions, setFlaggedQuestions] = useState({});
   const [showPracticeExplanation, setShowPracticeExplanation] = useState(false);
-  const [timeRemainingSeconds, setTimeRemainingSeconds] = useState(5400); // 90 mins in sec
+  const [timeRemainingSeconds, setTimeRemainingSeconds] = useState(5400);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [isOpticGridOpen, setIsOpticGridOpen] = useState(false);
 
   // Result filter
-  const [resultFilter, setResultFilter] = useState('all'); // 'all' | 'wrong' | 'unanswered' | 'flagged'
+  const [resultFilter, setResultFilter] = useState('all');
 
-  // Open setup for a chosen exam
   const handleOpenExamSetup = (examId) => {
     setSelectedExamId(examId);
     setIsSetupModalOpen(true);
   };
 
-  // Start exam with configuration
   const handleStartExam = () => {
     const fullExam = getMockExam(selectedExamId);
     const slicedQuestions = fullExam.questions.slice(0, questionCount);
-
     const finalDurationMins = isCustomDuration ? (parseInt(customDurationInput, 10) || 90) : examDurationMins;
 
     setCurrentExamData({
@@ -90,7 +83,7 @@ export default function ExamHub() {
     setScreenState('exam');
   };
 
-  // Countdown timer
+  // Timer
   useEffect(() => {
     let timer;
     if (screenState === 'exam' && isTimerRunning && timeRemainingSeconds > 0) {
@@ -136,18 +129,16 @@ export default function ExamHub() {
     setIsTimerRunning(false);
     setScreenState('results');
 
-    // Confetti for completion
     try {
       confetti({
-        particleCount: 120,
-        spread: 90,
+        particleCount: 90,
+        spread: 80,
         origin: { y: 0.6 },
-        colors: ['#a855f7', '#c084fc', '#f59e0b', '#10b981']
+        colors: ['#a855f7', '#10b981', '#ffffff']
       });
     } catch (e) {}
   };
 
-  // Stats calculation
   const questions = currentExamData?.questions || [];
   let correctCount = 0;
   let wrongCount = 0;
@@ -168,7 +159,6 @@ export default function ExamHub() {
   const currentAnswer = userAnswers[currentIndex];
   const isFlagged = flaggedQuestions[currentIndex] || false;
 
-  // Filtered questions in result scorecard
   const filteredResultQuestions = questions.map((q, idx) => ({ ...q, originalIdx: idx })).filter((q) => {
     const ans = userAnswers[q.originalIdx];
     if (resultFilter === 'wrong') return ans && ans !== q.correctAnswer;
@@ -178,39 +168,34 @@ export default function ExamHub() {
   });
 
   return (
-    <div className="space-y-6 animate-fadeIn">
+    <div className="space-y-6 animate-fadeIn max-w-6xl mx-auto">
       
-      {/* 1. MOCK EXAMS HUB & DASHBOARD (SELECTION SCREEN) */}
+      {/* 1. MOCK EXAMS HUB (SELECTION SCREEN) */}
       {screenState === 'hub' && (
         <div className="space-y-6">
           
-          {/* Main Hero Header */}
-          <div className="glass-panel p-6 sm:p-8 rounded-2xl border border-purple-500/30 relative overflow-hidden">
-            <div className="absolute -top-20 -right-20 w-80 h-80 bg-purple-600/20 rounded-full blur-3xl pointer-events-none" />
-            <div className="flex flex-wrap items-center justify-between gap-4 relative z-10">
-              <div className="space-y-2 max-w-2xl">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-950/80 border border-purple-500/30 text-xs font-mono text-purple-300">
-                  <GraduationCap className="w-4 h-4 text-purple-400" />
-                  <span>ÖSYM YDS / YÖKDİL & IELTS Standartları</span>
-                </div>
-                <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                  10 Adet 80 Soruluk Büyük Deneme Sınavları
-                </h1>
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                  Gerçek sınav formatında hazırlanmış 10 tam kapsamlı deneme sınavı. Süreyi isterseniz 90 dakika, isterseniz resmi 180 dakika veya dilediğiniz gibi ayarlayarak başlayabilirsiniz.
-                </p>
+          {/* Hero Bar */}
+          <div className="surface-card p-6 sm:p-8 rounded-2xl flex flex-wrap items-center justify-between gap-6">
+            <div className="space-y-2 max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-white/[0.05] border border-white/[0.08] text-xs font-mono text-zinc-300">
+                <GraduationCap className="w-3.5 h-3.5 text-brand-400" />
+                <span>ÖSYM YDS & YÖKDİL Standartları</span>
               </div>
-
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => handleOpenExamSetup(1)}
-                  className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 via-violet-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white text-xs sm:text-sm font-extrabold shadow-xl shadow-purple-600/30 transition-all hover:scale-105"
-                >
-                  <Play className="w-4 h-4 fill-white" />
-                  <span>Deneme 1'i Başlat</span>
-                </button>
-              </div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                10 Büyük Deneme Sınavı Merkezi
+              </h1>
+              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+                Her biri 80 özgün sorudan oluşan 10 tam kapsamlı deneme sınavı. Süreyi isterseniz resmi 180 dk, hızlı 90 dk veya dilediğiniz özel süreye ayarlayabilirsiniz.
+              </p>
             </div>
+
+            <button
+              onClick={() => handleOpenExamSetup(1)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs sm:text-sm font-bold shadow-glow-violet transition-all"
+            >
+              <Play className="w-4 h-4 fill-white" />
+              <span>Deneme 1'i Başlat</span>
+            </button>
           </div>
 
           {/* 10 Deneme Exams Grid */}
@@ -218,48 +203,42 @@ export default function ExamHub() {
             {mockExamsMeta.map((exam) => (
               <div
                 key={exam.id}
-                className="glass-panel glass-panel-hover p-5 sm:p-6 rounded-2xl border border-purple-500/20 hover:border-purple-400/50 flex flex-col justify-between group relative overflow-hidden"
+                className="surface-card surface-card-hover p-5 sm:p-6 rounded-2xl flex flex-col justify-between group"
               >
                 <div>
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-xl bg-obsidian-900 border border-purple-500/30 flex items-center justify-center font-mono font-bold text-sm text-purple-300 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                      <div className="w-8 h-8 rounded-lg bg-obsidian-900 border border-white/[0.08] flex items-center justify-center font-mono font-bold text-xs text-brand-300 group-hover:border-brand-500/40">
                         {exam.id}
                       </div>
-                      <div>
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-purple-950 text-purple-300 font-mono font-semibold border border-purple-500/20">
-                          {exam.difficulty}
-                        </span>
-                      </div>
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-obsidian-900 text-zinc-400 font-mono border border-white/[0.06]">
+                        {exam.difficulty}
+                      </span>
                     </div>
 
-                    <div className="text-right font-mono text-xs text-slate-400">
-                      <span className="text-purple-300 font-bold">80 Soru</span> • 90/180 dk
-                    </div>
+                    <span className="text-xs font-mono text-zinc-500">
+                      80 Soru • 90/180 dk
+                    </span>
                   </div>
 
-                  <h3 className="text-base sm:text-lg font-bold text-white mt-3 group-hover:text-purple-200 transition-colors">
+                  <h3 className="text-base font-bold text-white mt-3 group-hover:text-brand-200 transition-colors">
                     {exam.title}
                   </h3>
 
-                  <p className="text-xs text-slate-300 mt-2 line-clamp-2 leading-relaxed">
+                  <p className="text-xs text-zinc-400 mt-1.5 line-clamp-2 leading-relaxed">
                     {exam.desc}
                   </p>
                 </div>
 
-                <div className="mt-5 pt-3 border-t border-purple-900/30 flex items-center justify-between">
-                  <div className="flex items-center gap-3 text-xs text-slate-400 font-mono">
-                    <span>12 Bölüm</span>
-                    <span>•</span>
-                    <span>Tam YDS Müfredatı</span>
-                  </div>
+                <div className="mt-5 pt-3 border-t border-white/[0.06] flex items-center justify-between">
+                  <span className="text-xs text-zinc-500 font-mono">12 Soru Bölümü</span>
 
                   <button
                     onClick={() => handleOpenExamSetup(exam.id)}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-purple-950 hover:bg-purple-900 text-purple-200 border border-purple-500/30 hover:border-purple-400 text-xs font-bold transition-all shadow-md"
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-obsidian-900 hover:bg-brand-950 text-zinc-300 hover:text-brand-200 border border-white/[0.08] hover:border-brand-500/40 text-xs font-mono font-semibold transition-all"
                   >
-                    <Sliders className="w-3.5 h-3.5 text-purple-400" />
-                    <span>Sınavı Ayarla & Başla</span>
+                    <Sliders className="w-3.5 h-3.5" />
+                    <span>Yapılandır & Başla</span>
                   </button>
                 </div>
               </div>
@@ -269,42 +248,35 @@ export default function ExamHub() {
         </div>
       )}
 
-      {/* 2. EXAM SETUP MODAL (DURATION, QUESTIONS, MODE CONFIGURATION) */}
+      {/* 2. SETUP MODAL */}
       {isSetupModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-obsidian-950/85 backdrop-blur-md animate-fadeIn">
-          <div className="glass-panel w-full max-w-xl p-6 sm:p-8 rounded-2xl border border-purple-500/40 shadow-2xl space-y-6 relative">
-            
-            <div className="flex items-center justify-between border-b border-purple-900/40 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-purple-600/20 border border-purple-500/40 flex items-center justify-center">
-                  <Sliders className="w-5 h-5 text-purple-300" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-white">
-                    {mockExamsMeta.find(e => e.id === selectedExamId)?.title}
-                  </h3>
-                  <p className="text-xs text-slate-400">Sınav süresi, soru sayısı ve çözüm modunu belirleyin</p>
-                </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-obsidian-950/85 backdrop-blur-md">
+          <div className="surface-card w-full max-w-lg p-6 rounded-2xl shadow-elevated space-y-5">
+            <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
+              <div className="space-y-0.5">
+                <h3 className="text-base font-bold text-white">
+                  {mockExamsMeta.find(e => e.id === selectedExamId)?.title}
+                </h3>
+                <p className="text-xs text-zinc-400">Sınav süresi, soru adedi ve çözüm modunu seçin</p>
               </div>
-
               <button
                 onClick={() => setIsSetupModalOpen(false)}
-                className="p-1 text-slate-400 hover:text-white"
+                className="p-1 text-zinc-400 hover:text-white"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Config Option 1: Sınav Süresi (Duration) */}
+            {/* Duration */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-purple-300 uppercase tracking-wider flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5" />
-                <span>Sınav Süresi (Dakika)</span>
+              <label className="text-xs font-mono text-zinc-400 flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-brand-400" />
+                <span>Sınav Süresi</span>
               </label>
-              
+
               <div className="grid grid-cols-4 gap-2 text-xs font-mono">
                 {[
-                  { label: "90 Dk (Hızlı)", mins: 90 },
+                  { label: "90 Dk", mins: 90 },
                   { label: "180 Dk (Resmi)", mins: 180 },
                   { label: "60 Dk", mins: 60 },
                   { label: "45 Dk", mins: 45 },
@@ -316,10 +288,10 @@ export default function ExamHub() {
                       setIsCustomDuration(false);
                       setExamDurationMins(item.mins);
                     }}
-                    className={`p-2.5 rounded-xl border font-bold transition-all ${
+                    className={`p-2 rounded-xl border transition-all ${
                       !isCustomDuration && examDurationMins === item.mins
-                        ? 'bg-purple-600 text-white border-purple-400 shadow-md'
-                        : 'bg-obsidian-900 text-slate-300 border-purple-500/20 hover:border-purple-400'
+                        ? 'bg-brand-950 text-brand-200 border-brand-500/50 font-bold'
+                        : 'bg-obsidian-900 text-zinc-400 border-white/[0.06] hover:border-white/[0.15]'
                     }`}
                   >
                     {item.label}
@@ -327,18 +299,18 @@ export default function ExamHub() {
                 ))}
               </div>
 
-              {/* Custom Duration Input */}
-              <div className="pt-2 flex items-center gap-2 text-xs">
+              {/* Custom */}
+              <div className="pt-1 flex items-center gap-2 text-xs font-mono">
                 <button
                   type="button"
                   onClick={() => setIsCustomDuration(true)}
-                  className={`px-3 py-2 rounded-xl border font-mono font-medium transition-all ${
+                  className={`px-3 py-1.5 rounded-lg border transition-all ${
                     isCustomDuration
-                      ? 'bg-purple-600 text-white border-purple-400'
-                      : 'bg-obsidian-900 text-slate-400 border-purple-500/20'
+                      ? 'bg-brand-950 text-brand-200 border-brand-500/50'
+                      : 'bg-obsidian-900 text-zinc-400 border-white/[0.06]'
                   }`}
                 >
-                  Özel Süre Belirle:
+                  Özel Süre:
                 </button>
                 {isCustomDuration && (
                   <input
@@ -348,33 +320,33 @@ export default function ExamHub() {
                     value={customDurationInput}
                     onChange={(e) => setCustomDurationInput(e.target.value)}
                     placeholder="Dakika (örn: 120)"
-                    className="flex-1 bg-obsidian-900 border border-purple-500/30 rounded-xl px-3 py-2 text-white font-mono focus:outline-none focus:border-purple-400 text-xs"
+                    className="flex-1 surface-input rounded-lg px-3 py-1 text-white text-xs font-mono"
                   />
                 )}
               </div>
             </div>
 
-            {/* Config Option 2: Soru Sayısı (Question Count) */}
+            {/* Questions */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-purple-300 uppercase tracking-wider flex items-center gap-1.5">
-                <Layers className="w-3.5 h-3.5" />
+              <label className="text-xs font-mono text-zinc-400 flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-brand-400" />
                 <span>Soru Sayısı</span>
               </label>
 
               <div className="grid grid-cols-3 gap-2 text-xs font-mono">
                 {[
-                  { label: "80 Soru (Tam Deneme)", count: 80 },
-                  { label: "40 Soru (Yarı Deneme)", count: 40 },
-                  { label: "20 Soru (Mini Drill)", count: 20 },
+                  { label: "80 Soru (Tam)", count: 80 },
+                  { label: "40 Soru (Yarı)", count: 40 },
+                  { label: "20 Soru (Hız)", count: 20 },
                 ].map(item => (
                   <button
                     key={item.count}
                     type="button"
                     onClick={() => setQuestionCount(item.count)}
-                    className={`p-2.5 rounded-xl border font-bold transition-all ${
+                    className={`p-2 rounded-xl border transition-all ${
                       questionCount === item.count
-                        ? 'bg-purple-600 text-white border-purple-400 shadow-md'
-                        : 'bg-obsidian-900 text-slate-300 border-purple-500/20 hover:border-purple-400'
+                        ? 'bg-brand-950 text-brand-200 border-brand-500/50 font-bold'
+                        : 'bg-obsidian-900 text-zinc-400 border-white/[0.06] hover:border-white/[0.15]'
                     }`}
                   >
                     {item.label}
@@ -383,190 +355,162 @@ export default function ExamHub() {
               </div>
             </div>
 
-            {/* Config Option 3: Çözüm Modu (Official vs Practice) */}
+            {/* Mode */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-purple-300 uppercase tracking-wider flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Çözüm & Geri Bildirim Modu</span>
-              </label>
+              <label className="text-xs font-mono text-zinc-400">Mod</label>
 
-              <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="grid grid-cols-2 gap-2 text-xs">
                 <button
                   type="button"
                   onClick={() => setExamMode('official')}
-                  className={`p-3.5 rounded-xl border text-left transition-all space-y-1 ${
+                  className={`p-3 rounded-xl border text-left transition-all ${
                     examMode === 'official'
-                      ? 'bg-purple-900/60 border-purple-400 text-white shadow-md'
-                      : 'bg-obsidian-900 text-slate-400 border-purple-500/20 hover:border-purple-500/40'
+                      ? 'bg-brand-950/60 border-brand-500/40 text-brand-200'
+                      : 'bg-obsidian-900 text-zinc-400 border-white/[0.06]'
                   }`}
                 >
-                  <div className="font-bold text-purple-200">⏱️ Resmi Sınav Modu</div>
-                  <p className="text-[11px] text-slate-400 leading-snug">
-                    Süre işler, optik form açıktır. Açıklamalar sınav bitiminde ayrıntılı karne olarak sunulur.
-                  </p>
+                  <div className="font-bold">⏱️ Resmi Sınav Modu</div>
+                  <p className="text-[10px] text-zinc-500 mt-0.5">Açıklamalar sınav bitince verilir.</p>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setExamMode('practice')}
-                  className={`p-3.5 rounded-xl border text-left transition-all space-y-1 ${
+                  className={`p-3 rounded-xl border text-left transition-all ${
                     examMode === 'practice'
-                      ? 'bg-purple-900/60 border-purple-400 text-white shadow-md'
-                      : 'bg-obsidian-900 text-slate-400 border-purple-500/20 hover:border-purple-500/40'
+                      ? 'bg-brand-950/60 border-brand-500/40 text-brand-200'
+                      : 'bg-obsidian-900 text-zinc-400 border-white/[0.06]'
                   }`}
                 >
-                  <div className="font-bold text-purple-200">💡 Çalışma & Anında Çözüm</div>
-                  <p className="text-[11px] text-slate-400 leading-snug">
-                    Her soruda "Cevabı Kontrol Et" butonu ile açıklamaları anında inceleyebilirsiniz.
-                  </p>
+                  <div className="font-bold">💡 Anında Çözüm Modu</div>
+                  <p className="text-[10px] text-zinc-500 mt-0.5">Her soruda anında açıklama gösterilir.</p>
                 </button>
               </div>
             </div>
 
-            {/* Start CTA */}
-            <div className="pt-2 flex justify-end gap-3 border-t border-purple-900/30">
+            <div className="pt-2 flex justify-end gap-2 border-t border-white/[0.06]">
               <button
                 onClick={() => setIsSetupModalOpen(false)}
-                className="px-4 py-2.5 rounded-xl bg-obsidian-900 text-slate-400 hover:text-white text-xs font-semibold"
+                className="px-3.5 py-2 rounded-xl bg-obsidian-900 text-zinc-400 hover:text-white text-xs font-medium"
               >
                 İptal
               </button>
               <button
                 onClick={handleStartExam}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-purple-600/30 transition-all"
+                className="flex items-center gap-2 px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold shadow-glow-violet transition-all"
               >
-                <Play className="w-4 h-4 fill-white" />
+                <Play className="w-3.5 h-3.5 fill-white" />
                 <span>Sınavı Başlat</span>
               </button>
             </div>
-
           </div>
         </div>
       )}
 
-      {/* 3. ACTIVE EXAM SCREEN (80-QUESTION ENVIRONMENT WITH OPTICAL MATRIX) */}
+      {/* 3. ACTIVE EXAM SCREEN */}
       {screenState === 'exam' && currentQ && (
-        <div className="space-y-6">
+        <div className="space-y-4">
           
-          {/* Top Sticky Bar */}
-          <div className="glass-panel p-4 sm:p-5 rounded-2xl border border-purple-500/30 flex flex-wrap items-center justify-between gap-4 sticky top-16 z-30 bg-obsidian-950/90 backdrop-blur-xl">
-            <div className="flex items-center gap-3">
-              <span className="font-mono font-extrabold text-sm sm:text-base text-purple-300">
+          {/* Exam Header */}
+          <div className="surface-card p-3.5 sm:p-4 rounded-xl flex items-center justify-between gap-3 sticky top-14 z-30 bg-obsidian-950/90 backdrop-blur-xl">
+            <div className="flex items-center gap-2.5 font-mono text-xs">
+              <span className="font-bold text-zinc-200">
                 Soru {currentIndex + 1} / {totalQuestions}
               </span>
-              <span className="hidden sm:inline px-2.5 py-0.5 rounded bg-purple-950 text-[11px] text-purple-300 font-mono border border-purple-500/20">
+              <span className="hidden sm:inline px-2 py-0.5 rounded bg-obsidian-900 text-zinc-400 border border-white/[0.06]">
                 {currentQ.sectionName}
               </span>
             </div>
 
-            <div className="flex items-center gap-3">
-              {/* Live Timer */}
-              <div className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full font-mono text-xs sm:text-sm font-bold border shadow-inner ${
+            <div className="flex items-center gap-2">
+              <div className={`flex items-center gap-1.5 px-3 py-1 rounded-lg font-mono text-xs font-bold border ${
                 timeRemainingSeconds < 300
-                  ? 'bg-red-950/80 border-red-500 text-red-300 animate-pulse'
-                  : 'bg-obsidian-900 border-purple-500/30 text-amber-300'
+                  ? 'bg-red-950 text-red-300 border-red-500 animate-pulse'
+                  : 'bg-obsidian-900 border-white/[0.08] text-amber-300'
               }`}>
-                <Clock className="w-4 h-4" />
+                <Clock className="w-3.5 h-3.5" />
                 <span>{formatTime(timeRemainingSeconds)}</span>
               </div>
 
-              {/* Flag Question Button */}
               <button
                 onClick={() => handleToggleFlag()}
-                className={`p-2 rounded-xl border text-xs flex items-center gap-1.5 transition-all ${
+                className={`p-1.5 rounded-lg border text-xs font-mono flex items-center gap-1 transition-all ${
                   isFlagged
-                    ? 'bg-amber-950/80 border-amber-500 text-amber-300 font-bold'
-                    : 'bg-obsidian-900 border-purple-500/20 text-slate-400 hover:text-white'
+                    ? 'bg-amber-950 text-amber-300 border-amber-500'
+                    : 'bg-obsidian-900 border-white/[0.08] text-zinc-400 hover:text-white'
                 }`}
-                title="Soruyu İşaretle (Daha sonra bakmak için)"
+                title="İşaretle"
               >
-                <Flag className={`w-3.5 h-3.5 ${isFlagged ? 'fill-amber-400 text-amber-400' : ''}`} />
-                <span className="hidden sm:inline">{isFlagged ? 'İşaretlendi' : 'İşaretle'}</span>
+                <Flag className={`w-3.5 h-3.5 ${isFlagged ? 'fill-amber-400' : ''}`} />
+                <span className="hidden sm:inline">{isFlagged ? 'İşaretli' : 'İşaretle'}</span>
               </button>
 
-              {/* Toggle 80-Question Optical Matrix Drawer */}
               <button
                 onClick={() => setIsOpticGridOpen(!isOpticGridOpen)}
-                className="px-3 py-1.5 rounded-xl bg-violet-950 hover:bg-violet-900 text-purple-200 border border-purple-500/30 text-xs font-mono font-bold flex items-center gap-1.5"
+                className="px-2.5 py-1 rounded-lg bg-obsidian-900 hover:bg-obsidian-850 text-zinc-300 border border-white/[0.08] text-xs font-mono flex items-center gap-1"
               >
-                <Layers className="w-3.5 h-3.5 text-purple-400" />
-                <span>Soru Haritası ({Object.keys(userAnswers).filter(k => userAnswers[k]).length}/{totalQuestions})</span>
+                <Layers className="w-3.5 h-3.5 text-brand-400" />
+                <span>Harita ({Object.keys(userAnswers).filter(k => userAnswers[k]).length}/{totalQuestions})</span>
               </button>
 
-              {/* Finish Exam Button */}
               <button
                 onClick={handleFinishExam}
-                className="px-4 py-1.5 rounded-xl bg-red-950/80 hover:bg-red-900 text-red-200 border border-red-500/40 text-xs font-bold transition-all"
+                className="px-3 py-1 rounded-lg bg-red-950/80 hover:bg-red-900 text-red-200 border border-red-500/40 text-xs font-mono font-bold transition-all"
               >
-                Sınavı Bitir
+                Bitir
               </button>
             </div>
           </div>
 
-          {/* Main Layout: Question Card & Soru Haritası */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Question & Grid Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
             
-            {/* Question Card */}
-            <div className={`space-y-6 ${isOpticGridOpen ? 'lg:col-span-8' : 'lg:col-span-12'}`}>
-              <div className="glass-panel p-6 sm:p-8 rounded-2xl border border-purple-500/30 space-y-6">
+            <div className={`space-y-4 ${isOpticGridOpen ? 'lg:col-span-8' : 'lg:col-span-12'}`}>
+              <div className="surface-card p-6 sm:p-8 rounded-2xl space-y-6">
                 
-                {/* Section Badge */}
-                <div className="flex items-center justify-between border-b border-purple-900/40 pb-3 text-xs font-mono">
-                  <span className="text-purple-300 font-bold">
-                    {currentQ.sectionName}
-                  </span>
-                  <span className="text-slate-500">
-                    ÖSYM Soru No: {currentIndex + 1}
-                  </span>
-                </div>
-
-                {/* Reading Passage if available */}
+                {/* Passage */}
                 {currentQ.passage && (
-                  <div className="bg-obsidian-900/90 border border-purple-500/30 p-5 rounded-xl space-y-2 font-serif text-xs sm:text-sm text-slate-200 leading-relaxed">
-                    <span className="text-[11px] font-bold text-purple-300 font-mono uppercase tracking-wider block">
-                      📖 Paragraf Metni:
+                  <div className="bg-obsidian-900/90 border border-white/[0.06] p-4 sm:p-5 rounded-xl space-y-2 text-xs sm:text-sm text-zinc-300 font-serif leading-relaxed">
+                    <span className="text-[10px] font-mono text-brand-400 font-bold uppercase tracking-wider block">
+                      Paragraf Metni:
                     </span>
                     <p>{currentQ.passage}</p>
                   </div>
                 )}
 
-                {/* Question Text */}
-                <div className="text-base sm:text-lg font-bold text-white leading-relaxed font-sans">
+                {/* Question */}
+                <div className="text-sm sm:text-base font-bold text-zinc-100 leading-relaxed">
                   {currentQ.question}
                 </div>
 
-                {/* Options List (A, B, C, D, E) */}
-                <div className="space-y-2.5">
+                {/* Options */}
+                <div className="space-y-2">
                   {currentQ.options.map((opt) => {
                     const isSelected = currentAnswer === opt.key;
                     const isCorrect = opt.key === currentQ.correctAnswer;
 
-                    let optionStyle = "bg-obsidian-900/80 border-purple-500/20 text-slate-200 hover:border-purple-400 hover:bg-obsidian-850";
+                    let optStyle = "bg-obsidian-900/70 border-white/[0.06] text-zinc-300 hover:border-white/[0.15] hover:bg-obsidian-850";
 
                     if (examMode === 'practice' && showPracticeExplanation) {
-                      if (isCorrect) {
-                        optionStyle = "bg-emerald-950/80 border-emerald-500 text-emerald-200 shadow-md shadow-emerald-900/30";
-                      } else if (isSelected && !isCorrect) {
-                        optionStyle = "bg-red-950/80 border-red-500 text-red-200";
-                      } else {
-                        optionStyle = "bg-obsidian-950/50 border-transparent text-slate-500 opacity-60";
-                      }
+                      if (isCorrect) optStyle = "bg-emerald-950 text-emerald-200 border-emerald-500/60";
+                      else if (isSelected && !isCorrect) optStyle = "bg-red-950 text-red-200 border-red-500/60";
+                      else optStyle = "bg-obsidian-950 opacity-40 border-transparent";
                     } else if (isSelected) {
-                      optionStyle = "bg-purple-900/70 border-purple-400 text-white shadow-md shadow-purple-950/50";
+                      optStyle = "bg-brand-950/70 text-white border-brand-500/50 shadow-sm";
                     }
 
                     return (
                       <button
                         key={opt.key}
                         onClick={() => handleSelectAnswer(opt.key)}
-                        className={`w-full text-left p-4 rounded-xl border flex items-start gap-3.5 transition-all ${optionStyle}`}
+                        className={`w-full text-left p-3.5 rounded-xl border flex items-start gap-3 transition-all ${optStyle}`}
                       >
-                        <span className={`w-7 h-7 rounded-lg flex items-center justify-center font-mono font-bold text-xs shrink-0 ${
-                          isSelected ? 'bg-purple-600 text-white' : 'bg-obsidian-950 text-slate-400 border border-purple-500/20'
+                        <span className={`w-6 h-6 rounded-md flex items-center justify-center font-mono font-bold text-xs shrink-0 ${
+                          isSelected ? 'bg-brand-600 text-white' : 'bg-obsidian-850 text-zinc-400 border border-white/[0.06]'
                         }`}>
                           {opt.key}
                         </span>
-                        <span className="text-xs sm:text-sm font-medium mt-0.5 leading-relaxed font-sans">
+                        <span className="text-xs sm:text-sm font-medium mt-0.5 leading-relaxed">
                           {opt.text}
                         </span>
                       </button>
@@ -574,26 +518,16 @@ export default function ExamHub() {
                   })}
                 </div>
 
-                {/* Practice Mode Instant Explanation Box */}
+                {/* Practice Mode Explanation */}
                 {examMode === 'practice' && showPracticeExplanation && (
-                  <div className="bg-violet-950/50 border border-violet-500/40 p-5 rounded-xl space-y-3 animate-fadeIn">
-                    <div className="flex items-center gap-2 text-xs font-bold text-purple-300 uppercase tracking-wide">
-                      <HelpCircle className="w-4 h-4 text-purple-400" />
-                      <span>{t.common.explanation}</span>
-                    </div>
-                    <p className="text-xs sm:text-sm text-slate-200 leading-relaxed whitespace-pre-line">
-                      {currentQ.explanation}
-                    </p>
-                    {currentQ.strategyTip && (
-                      <div className="pt-2 border-t border-purple-900/30 text-xs text-amber-300/90 font-mono">
-                        💡 Sınav Stratejisi: {currentQ.strategyTip}
-                      </div>
-                    )}
+                  <div className="bg-brand-950/40 border border-brand-500/30 p-4 rounded-xl space-y-2 text-xs text-zinc-200 animate-fadeIn">
+                    <span className="font-bold text-brand-300 font-mono block">Çözüm Açıklaması:</span>
+                    <p className="leading-relaxed">{currentQ.explanation}</p>
                   </div>
                 )}
 
-                {/* Bottom Navigation Buttons */}
-                <div className="flex items-center justify-between pt-4 border-t border-purple-900/30">
+                {/* Footer Navigation */}
+                <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
                   <button
                     onClick={() => {
                       if (currentIndex > 0) {
@@ -602,19 +536,19 @@ export default function ExamHub() {
                       }
                     }}
                     disabled={currentIndex === 0}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-obsidian-900 border border-purple-500/20 text-xs text-slate-400 hover:text-white disabled:opacity-40 disabled:hover:text-slate-400"
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-obsidian-900 border border-white/[0.08] text-xs font-mono text-zinc-400 hover:text-white disabled:opacity-30"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
-                    <span>Önceki Soru</span>
+                    <span>Önceki</span>
                   </button>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     {examMode === 'practice' && !showPracticeExplanation && currentAnswer && (
                       <button
                         onClick={() => setShowPracticeExplanation(true)}
-                        className="px-4 py-2 rounded-xl bg-purple-900/80 hover:bg-purple-800 text-purple-200 border border-purple-500/40 text-xs font-bold"
+                        className="px-3.5 py-1.5 rounded-lg bg-brand-900 text-brand-200 border border-brand-500/40 text-xs font-mono font-bold"
                       >
-                        Cevabı Kontrol Et
+                        Açıklamayı Gör
                       </button>
                     )}
 
@@ -627,10 +561,10 @@ export default function ExamHub() {
                           handleFinishExam();
                         }
                       }}
-                      className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs sm:text-sm font-bold shadow-lg transition-all"
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold font-mono transition-all shadow-glow-violet"
                     >
-                      <span>{currentIndex + 1 === totalQuestions ? 'Sınavı Tamamla' : 'Sonraki Soru'}</span>
-                      <ArrowRight className="w-4 h-4" />
+                      <span>{currentIndex + 1 === totalQuestions ? 'Sınavı Bitir' : 'Sonraki'}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
@@ -638,52 +572,27 @@ export default function ExamHub() {
               </div>
             </div>
 
-            {/* 80-Question Optical Matrix Navigator Grid */}
+            {/* Soru Haritası Drawer */}
             {isOpticGridOpen && (
-              <div className="lg:col-span-4 glass-panel p-5 rounded-2xl border border-purple-500/30 space-y-4 max-h-[680px] overflow-y-auto">
-                <div className="flex items-center justify-between border-b border-purple-900/30 pb-2">
-                  <h4 className="text-xs font-bold text-white uppercase tracking-wider font-mono">
-                    80 Soru Haritası
-                  </h4>
-                  <button
-                    onClick={() => setIsOpticGridOpen(false)}
-                    className="text-slate-400 hover:text-white p-1"
-                  >
-                    <X className="w-4 h-4" />
+              <div className="lg:col-span-4 surface-card p-4 rounded-xl space-y-3 max-h-[640px] overflow-y-auto">
+                <div className="flex items-center justify-between text-xs font-mono text-zinc-300 pb-2 border-b border-white/[0.06]">
+                  <span className="font-bold">Soru Haritası (1 - {totalQuestions})</span>
+                  <button onClick={() => setIsOpticGridOpen(false)} className="text-zinc-500 hover:text-white">
+                    <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
 
-                {/* Legend */}
-                <div className="grid grid-cols-3 gap-1.5 text-[10px] font-mono text-center">
-                  <div className="p-1 rounded bg-purple-900/60 text-purple-200 border border-purple-500/30">
-                    Cevaplandı ({Object.keys(userAnswers).filter(k => userAnswers[k]).length})
-                  </div>
-                  <div className="p-1 rounded bg-amber-950/80 text-amber-300 border border-amber-500/30">
-                    İşaretli ({Object.keys(flaggedQuestions).filter(k => flaggedQuestions[k]).length})
-                  </div>
-                  <div className="p-1 rounded bg-obsidian-900 text-slate-400 border border-purple-900/30">
-                    Boş ({totalQuestions - Object.keys(userAnswers).filter(k => userAnswers[k]).length})
-                  </div>
-                </div>
-
-                {/* 1-80 Grid Matrix */}
-                <div className="grid grid-cols-5 sm:grid-cols-8 lg:grid-cols-5 gap-1.5 pt-2">
+                <div className="grid grid-cols-5 gap-1 pt-1">
                   {questions.map((q, idx) => {
                     const isAnswered = userAnswers[idx] !== undefined;
                     const ansLetter = userAnswers[idx];
                     const isCurrent = idx === currentIndex;
                     const flagged = flaggedQuestions[idx];
 
-                    let cellStyle = "bg-obsidian-900 text-slate-400 border-purple-900/30 hover:border-purple-500/50";
-                    if (isAnswered) {
-                      cellStyle = "bg-purple-600 text-white font-bold border-purple-400 shadow-sm";
-                    }
-                    if (flagged) {
-                      cellStyle += " ring-2 ring-amber-400";
-                    }
-                    if (isCurrent) {
-                      cellStyle += " ring-2 ring-white scale-105";
-                    }
+                    let cellStyle = "bg-obsidian-900 text-zinc-400 border-white/[0.04] hover:border-white/[0.15]";
+                    if (isAnswered) cellStyle = "bg-brand-600 text-white font-bold border-brand-400";
+                    if (flagged) cellStyle += " ring-1 ring-amber-400";
+                    if (isCurrent) cellStyle += " ring-2 ring-white";
 
                     return (
                       <button
@@ -692,12 +601,10 @@ export default function ExamHub() {
                           setCurrentIndex(idx);
                           setShowPracticeExplanation(false);
                         }}
-                        className={`p-2 rounded-lg border text-xs font-mono flex flex-col items-center justify-center transition-all ${cellStyle}`}
+                        className={`p-1.5 rounded-lg border text-xs font-mono flex flex-col items-center justify-center transition-all ${cellStyle}`}
                       >
                         <span>{idx + 1}</span>
-                        {isAnswered && (
-                          <span className="text-[9px] opacity-90">{ansLetter}</span>
-                        )}
+                        {isAnswered && <span className="text-[8px] opacity-90">{ansLetter}</span>}
                       </button>
                     );
                   })}
@@ -710,73 +617,67 @@ export default function ExamHub() {
         </div>
       )}
 
-      {/* 4. POST-EXAM RESULTS SCORECARD & DETAILED REVIEW */}
+      {/* 4. POST-EXAM RESULTS SCORECARD */}
       {screenState === 'results' && (
         <div className="space-y-6 max-w-4xl mx-auto animate-fadeIn">
           
-          {/* Main Scorecard Header */}
-          <div className="glass-panel p-6 sm:p-8 rounded-2xl border border-purple-500/40 text-center space-y-6 shadow-2xl">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-purple-600 to-fuchsia-600 mx-auto flex items-center justify-center shadow-lg shadow-purple-600/40">
-              <Award className="w-8 h-8 text-white" />
+          <div className="surface-card p-6 sm:p-8 rounded-2xl text-center space-y-5">
+            <div className="w-12 h-12 rounded-xl bg-brand-950 border border-brand-500/30 flex items-center justify-center mx-auto text-brand-300">
+              <Award className="w-6 h-6" />
             </div>
 
-            <div>
-              <span className="text-xs font-mono px-3 py-1 rounded-full bg-purple-950 text-purple-300 border border-purple-500/30">
+            <div className="space-y-1">
+              <span className="text-xs font-mono text-brand-400">
                 {currentExamData?.meta.title}
               </span>
-              <h2 className="text-2xl sm:text-3xl font-black text-white mt-2">
-                Sınav Performans Karnesi
+              <h2 className="text-2xl font-extrabold text-white">
+                Sınav Tamamlandı
               </h2>
             </div>
 
-            {/* Score Metric Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="bg-purple-950/60 border border-purple-500/30 p-4 rounded-xl">
-                <div className="text-2xl sm:text-3xl font-black text-purple-300 font-mono">{ydsScore}</div>
-                <div className="text-xs text-purple-200 mt-1">YDS / 100 Puan</div>
+            {/* Score Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto">
+              <div className="bg-obsidian-900 border border-white/[0.08] p-3.5 rounded-xl font-mono">
+                <div className="text-2xl font-black text-brand-300">{ydsScore}</div>
+                <div className="text-[11px] text-zinc-400 mt-1">YDS Puanı</div>
               </div>
-              <div className="bg-emerald-950/60 border border-emerald-500/30 p-4 rounded-xl">
-                <div className="text-2xl sm:text-3xl font-black text-emerald-400 font-mono">{correctCount}</div>
-                <div className="text-xs text-emerald-200 mt-1">Doğru Sayısı</div>
+              <div className="bg-emerald-950/40 border border-emerald-500/30 p-3.5 rounded-xl font-mono">
+                <div className="text-2xl font-black text-emerald-400">{correctCount}</div>
+                <div className="text-[11px] text-emerald-200 mt-1">Doğru</div>
               </div>
-              <div className="bg-red-950/60 border border-red-500/30 p-4 rounded-xl">
-                <div className="text-2xl sm:text-3xl font-black text-red-400 font-mono">{wrongCount}</div>
-                <div className="text-xs text-red-200 mt-1">Yanlış Sayısı</div>
+              <div className="bg-red-950/40 border border-red-500/30 p-3.5 rounded-xl font-mono">
+                <div className="text-2xl font-black text-red-400">{wrongCount}</div>
+                <div className="text-[11px] text-red-200 mt-1">Yanlış</div>
               </div>
-              <div className="bg-obsidian-900 border border-purple-500/20 p-4 rounded-xl">
-                <div className="text-2xl sm:text-3xl font-black text-slate-400 font-mono">{unansweredCount}</div>
-                <div className="text-xs text-slate-300 mt-1">Boş Sayısı</div>
+              <div className="bg-obsidian-900 border border-white/[0.08] p-3.5 rounded-xl font-mono">
+                <div className="text-2xl font-black text-zinc-400">{unansweredCount}</div>
+                <div className="text-[11px] text-zinc-400 mt-1">Boş</div>
               </div>
             </div>
 
-            <div className="pt-2 flex justify-center gap-3">
+            <div className="pt-2">
               <button
                 onClick={() => setScreenState('hub')}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-lg"
+                className="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold font-mono transition-all"
               >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Deneme Listesine Dön</span>
+                Deneme Listesine Dön
               </button>
             </div>
           </div>
 
-          {/* Question Review Section with Filter */}
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-purple-900/30 pb-3">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-purple-400" />
-                <span>Soruların Detaylı İncelemesi & Çözüm Anahtarı</span>
-              </h3>
-
-              <div className="flex items-center gap-1.5 text-xs font-mono">
+          {/* Review List */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between border-b border-white/[0.06] pb-2 text-xs font-mono">
+              <span className="font-bold text-zinc-300 uppercase">Soru Çözüm İncelemesi</span>
+              <div className="flex gap-1">
                 {['all', 'wrong', 'unanswered', 'flagged'].map((flt) => (
                   <button
                     key={flt}
                     onClick={() => setResultFilter(flt)}
-                    className={`px-3 py-1 rounded-lg capitalize transition-all ${
+                    className={`px-2.5 py-1 rounded-md capitalize transition-all ${
                       resultFilter === flt
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-obsidian-900 text-slate-400 hover:text-white border border-purple-500/20'
+                        ? 'bg-brand-950 text-brand-300 border border-brand-500/40'
+                        : 'text-zinc-400 hover:text-white'
                     }`}
                   >
                     {flt === 'all' ? 'Tümü' : flt === 'wrong' ? 'Yanlışlar' : flt === 'unanswered' ? 'Boşlar' : 'İşaretliler'}
@@ -785,8 +686,7 @@ export default function ExamHub() {
               </div>
             </div>
 
-            {/* Filtered Questions List */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               {filteredResultQuestions.map((q) => {
                 const userAns = userAnswers[q.originalIdx];
                 const isCorrect = userAns === q.correctAnswer;
@@ -795,65 +695,22 @@ export default function ExamHub() {
                 return (
                   <div
                     key={q.id}
-                    className="glass-panel p-5 rounded-2xl border border-purple-500/20 space-y-3"
+                    className="surface-card p-4 sm:p-5 rounded-xl space-y-3"
                   >
                     <div className="flex items-center justify-between text-xs font-mono">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-purple-300">Soru {q.originalIdx + 1}</span>
-                        <span className="text-slate-400">({q.sectionName})</span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        {isCorrect && (
-                          <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
-                            <Check className="w-3 h-3" /> Doğru ({userAns})
-                          </span>
-                        )}
-                        {!isCorrect && !isBlank && (
-                          <span className="px-2 py-0.5 rounded bg-red-950 text-red-300 border border-red-500/30 flex items-center gap-1">
-                            <X className="w-3 h-3" /> Yanlış (Sen: {userAns} / Doğru: {q.correctAnswer})
-                          </span>
-                        )}
-                        {isBlank && (
-                          <span className="px-2 py-0.5 rounded bg-obsidian-900 text-slate-400 border border-purple-900/30">
-                            Boş (Doğru: {q.correctAnswer})
-                          </span>
-                        )}
+                      <span className="font-bold text-zinc-300">Soru {q.originalIdx + 1} ({q.sectionName})</span>
+                      <div>
+                        {isCorrect && <span className="text-emerald-400">✓ Doğru ({userAns})</span>}
+                        {!isCorrect && !isBlank && <span className="text-red-400">✗ Yanlış (Sen: {userAns} / Doğru: {q.correctAnswer})</span>}
+                        {isBlank && <span className="text-zinc-500">Boş (Doğru: {q.correctAnswer})</span>}
                       </div>
                     </div>
 
-                    <div className="text-sm font-semibold text-white">
-                      {q.question}
-                    </div>
+                    <p className="text-xs sm:text-sm text-zinc-100 font-medium">{q.question}</p>
 
-                    {/* Options Preview */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                      {q.options.map((opt) => (
-                        <div
-                          key={opt.key}
-                          className={`p-2.5 rounded-lg border flex items-center gap-2 ${
-                            opt.key === q.correctAnswer
-                              ? 'bg-emerald-950/70 border-emerald-500 text-emerald-200'
-                              : opt.key === userAns
-                              ? 'bg-red-950/70 border-red-500 text-red-200'
-                              : 'bg-obsidian-900/50 border-purple-900/20 text-slate-400'
-                          }`}
-                        >
-                          <span className="font-mono font-bold">{opt.key})</span>
-                          <span>{opt.text}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Detailed Explanation */}
-                    <div className="bg-violet-950/40 border border-violet-500/30 p-4 rounded-xl text-xs text-slate-200 space-y-1">
-                      <div className="font-bold text-purple-300 font-mono text-[11px]">ÇÖZÜM AÇIKLAMASI:</div>
+                    <div className="bg-obsidian-900 p-3.5 rounded-lg border border-white/[0.06] text-xs text-zinc-300 space-y-1 font-sans">
+                      <span className="font-bold text-brand-300 font-mono text-[10px] block">Açıklama:</span>
                       <p className="leading-relaxed">{q.explanation}</p>
-                      {q.strategyTip && (
-                        <div className="text-amber-300/90 pt-1 font-mono text-[10px]">
-                          💡 İpucu: {q.strategyTip}
-                        </div>
-                      )}
                     </div>
                   </div>
                 );
